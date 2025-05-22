@@ -47,11 +47,19 @@
       width: 122px;
     }
   </style>
+  <!-- Step 5: TrackJS integration -->
+<script src="https://cdn.trackjs.com/agent/v3/latest/t.js"></script>
+<script>
+  window.TrackJS && TrackJS.install({ 
+    token: "e72ca13fa4b84861af1c68c251fcd314"
+  });
+  TrackJS.track('Testing TrackJS!');
+</script>
 </head>
 
 <body>
   <main>
-    <form>
+    <form id="calc-form">
       <fieldset>
         <legend>Error Calculator</legend>
         <input name="first-num" id="first-num" />
@@ -64,7 +72,7 @@
         <input name="second-num" id="second-num" />
         <button id="calculate">Calculate</button>
         <br />
-        <output></output>
+        <output id="result"></output>
       </fieldset>
     </form>
 
@@ -88,20 +96,158 @@
   </main>
 
   <script>
-    let form = document.querySelector('form');
-    form.addEventListener('submit', e => {
+    // ————————————————————————————————
+    // Step 3 & 4: Custom Errors + try/catch/finally in the calculator
+    // ————————————————————————————————
+    class ValidationError extends Error {
+      constructor(message) {
+        super(message);
+        this.name = "ValidationError";
+      }
+    }
+
+    const form = document.getElementById("calc-form");
+    const output = document.getElementById("result");
+
+    form.addEventListener("submit", e => {
       e.preventDefault();
-      let output = document.querySelector('output');
-      let firstNum = document.querySelector('#first-num').value;
-      let secondNum = document.querySelector('#second-num').value;
-      let operator = document.querySelector('#operator').value;
-      output.innerHTML = eval(`${firstNum} ${operator} ${secondNum}`);
+
+      const a = document.getElementById("first-num").value.trim();
+      const b = document.getElementById("second-num").value.trim();
+      const op = document.getElementById("operator").value;
+      try {
+        // Validate inputs
+        if (a === "" || b === "") {
+          throw new ValidationError("Both inputs are required.");
+        }
+        if (isNaN(a) || isNaN(b)) {
+          throw new ValidationError("Inputs must be numeric.");
+        }
+        if (op === "/" && Number(b) === 0) {
+          throw new Error("Division by zero is not allowed.");
+        }
+
+        // Perform calculation
+        const result = eval(`${a} ${op} ${b}`);
+        output.textContent = result;
+      }
+      catch (err) {
+        if (err instanceof ValidationError) {
+          console.warn(`Validation failed: ${err.message}`, { a, b, op });
+        } else {
+          console.error("Calculation error:", err);
+        }
+        output.textContent = "Error!";
+      }
+      finally {
+        console.log("Calculation attempt complete.");
+      }
     });
 
-    let errorBtns = Array.from(document.querySelectorAll('#error-btns > button'));
+    // ————————————————————————————————
+    // Step 2: Console method buttons
+    // ————————————————————————————————
+    const btns = Array.from(document.querySelectorAll("#error-btns > button"));
+    const [
+      logBtn,
+      errorBtn,
+      countBtn,
+      warnBtn,
+      assertBtn,
+      clearBtn,
+      dirBtn,
+      dirxmlBtn,
+      groupStartBtn,
+      groupEndBtn,
+      tableBtn,
+      startTimerBtn,
+      endTimerBtn,
+      traceBtn,
+      globalErrorBtn
+    ] = btns;
 
-    // Start your code here
-    // You may move this JS to another file if you wish
+    // Simple data we’ll reuse
+    const demoData = [
+      { id: 1, name: "Alice", score: 42 },
+      { id: 2, name: "Bob",   score: 37 }
+    ];
+
+    logBtn.addEventListener("click", () => {
+      console.log("Hello from console.log!", demoData);
+    });
+
+    errorBtn.addEventListener("click", () => {
+      console.error("This is a console.error demonstration!");
+    });
+
+    countBtn.addEventListener("click", () => {
+      console.count("button-clicks");
+    });
+
+    warnBtn.addEventListener("click", () => {
+      console.warn("⚠️  Watch out – console.warn!");
+    });
+
+    assertBtn.addEventListener("click", () => {
+      console.assert(demoData.length === 3, "demoData should have 3 items", demoData);
+    });
+
+    clearBtn.addEventListener("click", () => {
+      console.clear();
+    });
+
+    dirBtn.addEventListener("click", () => {
+      console.dir(document.body);
+    });
+
+    dirxmlBtn.addEventListener("click", () => {
+      console.dirxml(document.body);
+    });
+
+    groupStartBtn.addEventListener("click", () => {
+      console.group("Grouped Messages");
+      console.log("➡️  Inside group: 1");
+      console.log("➡️  Inside group: 2");
+    });
+
+    groupEndBtn.addEventListener("click", () => {
+      console.groupEnd();
+    });
+
+    tableBtn.addEventListener("click", () => {
+      console.table(demoData);
+    });
+
+    startTimerBtn.addEventListener("click", () => {
+      console.time("demoTimer");
+    });
+
+    endTimerBtn.addEventListener("click", () => {
+      console.timeEnd("demoTimer");
+    });
+
+    // Build a small call stack for .trace()
+    function first() { second(); }
+    function second() { third(); }
+    function third() { console.trace("Stack trace:"); }
+
+    traceBtn.addEventListener("click", () => {
+      first();
+    });
+
+    // ————————————————————————————————
+    // Step 5: Global error handler
+    // ————————————————————————————————
+    window.onerror = function(message, source, lineno, colno, error) {
+      console.log("Caught by window.onerror:", message);
+      // also send to TrackJS (it’ll happen automatically once you’ve installed)
+      return true; // prevent the default browser handler
+    };
+
+    globalErrorBtn.addEventListener("click", () => {
+      // This will throw because not defined
+      nonExistentFunctionCall();
+    });
   </script>
 </body>
 
