@@ -3,4 +3,4 @@
 [Link to GitHub Pages](https://sachin-dot-py.github.io/CSE110-Lab9/)
 
 ## TrackJS Screenshot
-![trackJS](trackjs.png)
+![trackJS](trackjs.jpeg)
